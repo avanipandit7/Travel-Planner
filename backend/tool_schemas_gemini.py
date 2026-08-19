@@ -1,7 +1,13 @@
-TRANSPORT_TOOL = {
-    "name": "search_transport",
-    "description": "Find transport options (flight, train, bus, or cab) between an origin and a destination in Maharashtra on a given date. Returns a list of options with mode, cost, and duration.",
-    "input_schema": {
+from google.genai import types
+
+TRANSPORT_DECL = types.FunctionDeclaration(
+    name="search_transport",
+    description=(
+        "Find transport options (flight, train, bus, or cab) between an origin "
+        "and a destination in Maharashtra on a given date. Returns a list of "
+        "options with mode, cost, and duration."
+    ),
+    parameters_json_schema={
         "type": "object",
         "properties": {
             "origin": {"type": "string", "description": "Starting city, e.g. 'Pune'"},
@@ -10,12 +16,15 @@ TRANSPORT_TOOL = {
         },
         "required": ["origin", "destination", "date"],
     },
-}
+)
 
-HOTEL_TOOL = {
-    "name": "search_hotels",
-    "description": "Find hotels in a given destination, optionally filtered by a maximum price per night. Returns a list of hotels with name, price, and rating.",
-    "input_schema": {
+HOTEL_DECL = types.FunctionDeclaration(
+    name="search_hotels",
+    description=(
+        "Find hotels in a given destination, optionally filtered by a maximum "
+        "price per night. Returns a list of hotels with name, price, and rating."
+    ),
+    parameters_json_schema={
         "type": "object",
         "properties": {
             "destination": {"type": "string", "description": "City to search hotels in"},
@@ -24,12 +33,15 @@ HOTEL_TOOL = {
         },
         "required": ["destination", "nights"],
     },
-}
+)
 
-ACTIVITY_TOOL = {
-    "name": "search_activities",
-    "description": "Find activities/attractions in a destination that match the traveler's interests (e.g. food, nature, culture, adventure, nightlife, shopping).",
-    "input_schema": {
+ACTIVITY_DECL = types.FunctionDeclaration(
+    name="search_activities",
+    description=(
+        "Find activities/attractions in a destination that match the traveler's "
+        "interests (e.g. food, nature, culture, adventure, nightlife, shopping)."
+    ),
+    parameters_json_schema={
         "type": "object",
         "properties": {
             "destination": {"type": "string"},
@@ -41,12 +53,16 @@ ACTIVITY_TOOL = {
         },
         "required": ["destination", "interests"],
     },
-}
+)
 
-BUDGET_TOOL = {
-    "name": "calculate_budget",
-    "description": "Check whether the sum of transport, hotel, and activity costs fits within the traveler's total budget. Call this AFTER gathering transport, hotel, and activity costs — it should be the last tool called.",
-    "input_schema": {
+BUDGET_DECL = types.FunctionDeclaration(
+    name="calculate_budget",
+    description=(
+        "Check whether the sum of transport, hotel, and activity costs fits "
+        "within the traveler's total budget. Call this AFTER gathering transport, "
+        "hotel, and activity costs — it should be the last tool called."
+    ),
+    parameters_json_schema={
         "type": "object",
         "properties": {
             "transport_cost": {"type": "number"},
@@ -56,6 +72,8 @@ BUDGET_TOOL = {
         },
         "required": ["transport_cost", "hotel_cost", "activities_cost", "total_budget"],
     },
-}
+)
 
-ALL_TOOLS = [TRANSPORT_TOOL, HOTEL_TOOL, ACTIVITY_TOOL, BUDGET_TOOL]
+TRIP_TOOL = types.Tool(
+    function_declarations=[TRANSPORT_DECL, HOTEL_DECL, ACTIVITY_DECL, BUDGET_DECL]
+)

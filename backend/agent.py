@@ -1,13 +1,16 @@
 import os
 import json
 from dotenv import load_dotenv
-import anthropic
+from google import genai
+from google.genai import types
 
-from tool_schemas import ALL_TOOLS
+from tool_schemas_gemini import TRIP_TOOL
 from tools import search_transport, search_hotels, search_activities, calculate_budget
 
 load_dotenv()
-client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+
+MODEL = "gemini-3.6-flash"
 
 SYSTEM_PROMPT = """You are a travel planning agent for trips within Maharashtra, India.
 
@@ -20,7 +23,7 @@ You have four tools available:
 - search_activities: find activities matching the traveler's interests
 - calculate_budget: check total cost against the budget (call this LAST, after you have transport, hotel, and activity costs)
 
-Order: 
+Follow this general order, but adapt if something doesn't fit:
 1. Search transport first.
 2. Search hotels, filtered to a reasonable price given the budget.
 3. Search activities matching the traveler's interests.
@@ -43,6 +46,12 @@ TOOL_FUNCTIONS = {
 
 MAX_ITERATIONS = 8
 
+CONFIG = types.GenerateContentConfig(
+    system_instruction=SYSTEM_PROMPT,
+    tools=[TRIP_TOOL],
+    automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
+)
+
 
 def call_tool(name: str, tool_input: dict):
     fn = TOOL_FUNCTIONS.get(name)
@@ -55,36 +64,33 @@ def call_tool(name: str, tool_input: dict):
 
 
 def plan_trip(trip_request_text: str, verbose: bool = True):
-    messages = [{"role": "user", "content": trip_request_text}]
+    contents = [types.Content(role="user", parts=[types.Part.from_text(text=trip_request_text)])]
 
     for iteration in range(MAX_ITERATIONS):
-        response = client.messages.create(
-            model="claude-sonnet-5",
-            max_tokens=1500,
-            system=SYSTEM_PROMPT,
-            tools=ALL_TOOLS,
-            messages=messages,
+        response = client.models.generate_content(
+            model=MODEL,
+            contents=contents,
+            config=CONFIG,
         )
-        messages.append({"role": "assistant", "content": response.content})
+        contents.append(response.candidates[0].content)
 
-        if response.stop_reason != "tool_use":
-            final_text = "".join(b.text for b in response.content if b.type == "text")
-            return final_text
+        function_calls = response.function_calls
+        if not function_calls:
+            return response.text
 
-        tool_results = []
-        for block in response.content:
-            if block.type == "tool_use":
-                if verbose:
-                    print(f"  [iteration {iteration+1}] calling {block.name}({block.input})")
-                result = call_tool(block.name, block.input)
-                if verbose:
-                    print(f"    -> {result}")
-                tool_results.append({
-                    "type": "tool_result",
-                    "tool_use_id": block.id,
-                    "content": json.dumps(result),
-                })
-        messages.append({"role": "user", "content": tool_results})
+        function_response_parts = []
+        for fc in function_calls:
+            args = dict(fc.args) if fc.args else {}
+            if verbose:
+                print(f"  [iteration {iteration+1}] calling {fc.name}({args})")
+            result = call_tool(fc.name, args)
+            if verbose:
+                print(f"    -> {result}")
+            function_response_parts.append(
+                types.Part.from_function_response(name=fc.name, response={"result": result})
+            )
+
+        contents.append(types.Content(role="user", parts=function_response_parts))
 
     return "Agent hit the iteration limit without finishing. Check the trace above."
 
