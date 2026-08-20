@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
-from tool_schemas_gemini import TRIP_TOOL
+from tool_schemas import TRIP_TOOL
 from tools import search_transport, search_hotels, search_activities, calculate_budget
 
 load_dotenv()
