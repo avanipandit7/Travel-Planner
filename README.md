@@ -1,4 +1,4 @@
-# Waypoint — AI Travel Planning Chatbot
+# AI Travel Planning Chatbot
 
 A full-stack travel planning app centered on a conversational assistant that
 turns a budget and a few preferences into a complete, budget-aware trip plan
