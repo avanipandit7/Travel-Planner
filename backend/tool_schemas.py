@@ -3,15 +3,15 @@ from google.genai import types
 TRANSPORT_DECL = types.FunctionDeclaration(
     name="search_transport",
     description=(
-        "Find transport options (flight, train, bus, or cab) between an origin "
-        "and a destination in Maharashtra on a given date. Returns a list of "
-        "options with mode, cost, and duration."
+        "Find transport options (flight, train, bus, or cab) from the traveler's "
+        "origin city into Mumbai on a given date. Returns a list of options with "
+        "mode, cost, and duration."
     ),
     parameters_json_schema={
         "type": "object",
         "properties": {
-            "origin": {"type": "string", "description": "Starting city, e.g. 'Pune'"},
-            "destination": {"type": "string", "description": "Destination city, e.g. 'Mahabaleshwar'"},
+            "origin": {"type": "string", "description": "Starting city, e.g. 'Pune' or 'Delhi'"},
+            "destination": {"type": "string", "description": "Always 'Mumbai' in the current single-city scope"},
             "date": {"type": "string", "description": "Travel date, format YYYY-MM-DD"},
         },
         "required": ["origin", "destination", "date"],
@@ -21,13 +21,13 @@ TRANSPORT_DECL = types.FunctionDeclaration(
 HOTEL_DECL = types.FunctionDeclaration(
     name="search_hotels",
     description=(
-        "Find hotels in a given destination, optionally filtered by a maximum "
-        "price per night. Returns a list of hotels with name, price, and rating."
+        "Find hotels in Mumbai, optionally filtered by a maximum price per night. "
+        "Returns a list of hotels with name, neighborhood/area, price, and rating."
     ),
     parameters_json_schema={
         "type": "object",
         "properties": {
-            "destination": {"type": "string", "description": "City to search hotels in"},
+            "destination": {"type": "string", "description": "Always 'Mumbai' in the current single-city scope"},
             "nights": {"type": "integer", "description": "Number of nights the traveler will stay"},
             "max_price_per_night": {"type": "number", "description": "Optional upper price limit per night"},
         },
@@ -38,13 +38,14 @@ HOTEL_DECL = types.FunctionDeclaration(
 ACTIVITY_DECL = types.FunctionDeclaration(
     name="search_activities",
     description=(
-        "Find activities/attractions in a destination that match the traveler's "
-        "interests (e.g. food, nature, culture, adventure, nightlife, shopping)."
+        "Find activities/attractions in Mumbai that match the traveler's "
+        "interests (e.g. food, nature, culture, adventure, nightlife, shopping), "
+        "spread across neighborhoods like Colaba, Bandra, Juhu, and Andheri."
     ),
     parameters_json_schema={
         "type": "object",
         "properties": {
-            "destination": {"type": "string"},
+            "destination": {"type": "string", "description": "Always 'Mumbai' in the current single-city scope"},
             "interests": {
                 "type": "array",
                 "items": {"type": "string"},

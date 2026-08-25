@@ -10,17 +10,20 @@ from tools import search_transport, search_hotels, search_activities, calculate_
 load_dotenv()
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-MODEL = "gemini-3.6-flash"
+MODEL = "gemini-3.6-flash"  # check https://ai.dev/rate-limit for current free-tier limits
 
-SYSTEM_PROMPT = """You are a travel planning agent for trips within Maharashtra, India.
+SYSTEM_PROMPT = """You are a travel planning agent for trips to Mumbai, India.
 
-Given a trip request (origin, destination, start date, end date, budget, interests),
-your job is to build a complete day-wise itinerary that fits within the stated budget.
+The destination is always Mumbai. Given a trip request (origin city, start date,
+end date, budget, interests), your job is to build a complete day-wise Mumbai
+itinerary that fits within the stated budget, using real neighborhoods
+(Colaba, Bandra, Juhu, Andheri, Powai, South Mumbai) to keep the plan grounded
+and realistic rather than generic.
 
 You have four tools available:
-- search_transport: find transport between origin and destination
-- search_hotels: find hotels at the destination
-- search_activities: find activities matching the traveler's interests
+- search_transport: find transport from the traveler's origin city into Mumbai
+- search_hotels: find hotels in Mumbai (returned with their neighborhood/area)
+- search_activities: find activities in Mumbai matching the traveler's interests
 - calculate_budget: check total cost against the budget (call this LAST, after you have transport, hotel, and activity costs)
 
 Follow this general order, but adapt if something doesn't fit:
@@ -34,7 +37,8 @@ activities and recalculate — don't just report it's over budget and stop.
 
 Once you have transport, a hotel, activities for each day, and a budget check that
 passes, STOP calling tools and respond with a final plain-text summary of the itinerary:
-transport choice, hotel choice, a day-by-day list of activities, and total cost vs budget.
+transport choice, hotel choice (with its neighborhood), a day-by-day list of
+activities, and total cost vs budget.
 """
 
 TOOL_FUNCTIONS = {
@@ -97,7 +101,7 @@ def plan_trip(trip_request_text: str, verbose: bool = True):
 
 if __name__ == "__main__":
     request = (
-        "Plan a trip from Pune to Mahabaleshwar, 2026-09-10 to 2026-09-12 "
+        "Plan a trip from Pune to Mumbai, 2026-09-10 to 2026-09-12 "
         "(2 nights), budget 8000 INR, interested in nature and food."
     )
     print(f"Request: {request}\n")

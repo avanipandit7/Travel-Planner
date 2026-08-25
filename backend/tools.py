@@ -1,32 +1,35 @@
 """
-STUB VERSION — fake, hardcoded data so the agent loop can be built and tested
-before the real backend (Person B's tools.py) is ready. Swap this file out
-later; keep the function names and return shapes identical so agent.py
-doesn't need to change.
+STUB VERSION — fake, hardcoded data so the agent loop can be tested before
+Person B's real Mumbai dataset is ready. Destination is always Mumbai now;
+origin varies. Keep function names/return shapes identical when swapping
+in real data later — agent.py shouldn't need to change.
 """
 
 STUB_TRANSPORT = [
-    {"origin": "Pune", "destination": "Mahabaleshwar", "mode": "cab", "cost": 2500, "duration_hrs": 3},
-    {"origin": "Pune", "destination": "Mahabaleshwar", "mode": "bus", "cost": 400, "duration_hrs": 4},
-    {"origin": "Mumbai", "destination": "Nagpur", "mode": "flight", "cost": 3200, "duration_hrs": 1.5},
-    {"origin": "Mumbai", "destination": "Nagpur", "mode": "train", "cost": 900, "duration_hrs": 14},
+    {"origin": "Pune", "destination": "Mumbai", "mode": "train", "cost": 350, "duration_hrs": 3.5},
+    {"origin": "Pune", "destination": "Mumbai", "mode": "bus", "cost": 450, "duration_hrs": 4},
+    {"origin": "Delhi", "destination": "Mumbai", "mode": "flight", "cost": 4200, "duration_hrs": 2.2},
+    {"origin": "Delhi", "destination": "Mumbai", "mode": "train", "cost": 1800, "duration_hrs": 16},
+    {"origin": "Bangalore", "destination": "Mumbai", "mode": "flight", "cost": 3500, "duration_hrs": 1.8},
 ]
 
 STUB_HOTELS = [
-    {"destination": "Mahabaleshwar", "name": "Hotel Grand View", "price_per_night": 2200, "rating": 4.1},
-    {"destination": "Mahabaleshwar", "name": "Valley Inn", "price_per_night": 1400, "rating": 3.7},
-    {"destination": "Nagpur", "name": "Orange City Suites", "price_per_night": 1800, "rating": 4.0},
+    {"destination": "Mumbai", "area": "Colaba", "name": "Sea Breeze Residency", "price_per_night": 3200, "rating": 4.2},
+    {"destination": "Mumbai", "area": "Bandra", "name": "Bandra Boutique Stay", "price_per_night": 2800, "rating": 4.0},
+    {"destination": "Mumbai", "area": "Andheri", "name": "Andheri Business Hotel", "price_per_night": 1800, "rating": 3.8},
+    {"destination": "Mumbai", "area": "Juhu", "name": "Juhu Beach View Inn", "price_per_night": 2400, "rating": 4.1},
+    {"destination": "Mumbai", "area": "Powai", "name": "Powai Lake Suites", "price_per_night": 2000, "rating": 3.9},
 ]
 
 STUB_ACTIVITIES = {
-    "Mahabaleshwar": [
-        {"name": "Venna Lake Boating", "tag": "nature", "cost": 200},
-        {"name": "Mapro Garden", "tag": "food", "cost": 0},
-        {"name": "Arthur's Seat Viewpoint", "tag": "nature", "cost": 0},
-    ],
-    "Nagpur": [
-        {"name": "Deekshabhoomi", "tag": "culture", "cost": 0},
-        {"name": "Zero Mile Stone", "tag": "culture", "cost": 0},
+    "Mumbai": [
+        {"name": "Gateway of India", "area": "Colaba", "tag": "culture", "cost": 0},
+        {"name": "Bandra-Worli Sea Link viewpoint", "area": "Bandra", "tag": "nature", "cost": 0},
+        {"name": "Mohammed Ali Road food walk", "area": "South Mumbai", "tag": "food", "cost": 500},
+        {"name": "Juhu Beach", "area": "Juhu", "tag": "nature", "cost": 0},
+        {"name": "Colaba Causeway shopping", "area": "Colaba", "tag": "shopping", "cost": 0},
+        {"name": "Bandra nightlife strip", "area": "Bandra", "tag": "nightlife", "cost": 800},
+        {"name": "Elephanta Caves", "area": "Mumbai Harbour", "tag": "culture", "cost": 600},
     ],
 }
 
@@ -59,7 +62,7 @@ def calculate_budget(transport_cost: float, hotel_cost: float, activities_cost: 
 
 
 if __name__ == "__main__":
-    print(search_transport("Pune", "Mahabaleshwar", "2026-09-10"))
-    print(search_hotels("Mahabaleshwar", nights=2, max_price_per_night=2000))
-    print(search_activities("Mahabaleshwar", ["nature", "food"]))
-    print(calculate_budget(2500, 2800, 200, 10000))
+    print(search_transport("Pune", "Mumbai", "2026-09-10"))
+    print(search_hotels("Mumbai", nights=2, max_price_per_night=2500))
+    print(search_activities("Mumbai", ["nature", "food"]))
+    print(calculate_budget(350, 4800, 500, 10000))
