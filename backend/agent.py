@@ -26,6 +26,12 @@ You have four tools available:
 - search_activities: find activities in Mumbai matching the traveler's interests
 - calculate_budget: check total cost against the budget (call this LAST, after you have transport, hotel, and activity costs)
 
+IMPORTANT — transport cost handling: search_transport returns a ONE-WAY cost.
+The traveler needs to get home too, so always DOUBLE the one-way cost to get
+the round-trip transport cost, and use that doubled figure as transport_cost
+when calling calculate_budget and in your final summary. State clearly in your
+final answer that the transport figure is round-trip.
+
 Follow this general order, but adapt if something doesn't fit:
 1. Search transport first.
 2. Search hotels, filtered to a reasonable price given the budget.
