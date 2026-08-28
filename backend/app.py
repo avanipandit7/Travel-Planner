@@ -34,6 +34,21 @@ CORS(app)  # dev-friendly; tighten origins before deploying
 DESTINATION = "Mumbai"  # fixed for this scope — not accepted as user input
 
 
+# --------------------------------- root route ---------------------------------
+
+@app.get("/")
+def home():
+    return jsonify({
+        "message": "Travel Planner API",
+        "endpoints": {
+            "transport": "POST /api/transport",
+            "hotels": "POST /api/hotels",
+            "activities": "POST /api/activities",
+            "plan": "POST /api/plan"
+        }
+    })
+
+
 # --------------------------- validation helpers ---------------------------
 
 def validation_error(errors):
