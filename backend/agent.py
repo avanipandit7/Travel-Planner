@@ -10,41 +10,9 @@ from tools import search_transport, search_hotels, search_activities, calculate_
 load_dotenv()
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-MODEL = "gemini-3.6-flash"  # check https://ai.dev/rate-limit for current free-tier limits
+MODEL = "gemini-3.5-Flash lite"  # check https://ai.dev/rate-limit for current free-tier limits
 
 SYSTEM_PROMPT = """You are a travel planning agent for trips to Mumbai, India.
-
-The destination is always Mumbai. Given a trip request (origin city, start date,
-end date, budget, interests), your job is to build a complete day-wise Mumbai
-itinerary that fits within the stated budget, using real neighborhoods
-(Colaba, Bandra, Juhu, Andheri, Powai, South Mumbai) to keep the plan grounded
-and realistic rather than generic.
-
-You have four tools available:
-- search_transport: find transport from the traveler's origin city into Mumbai
-- search_hotels: find hotels in Mumbai (returned with their neighborhood/area)
-- search_activities: find activities in Mumbai matching the traveler's interests
-- calculate_budget: check total cost against the budget (call this LAST, after you have transport, hotel, and activity costs)
-
-IMPORTANT — transport cost handling: search_transport returns a ONE-WAY cost.
-The traveler needs to get home too, so always DOUBLE the one-way cost to get
-the round-trip transport cost, and use that doubled figure as transport_cost
-when calling calculate_budget and in your final summary. State clearly in your
-final answer that the transport figure is round-trip.
-
-Follow this general order, but adapt if something doesn't fit:
-1. Search transport first.
-2. Search hotels, filtered to a reasonable price given the budget.
-3. Search activities matching the traveler's interests.
-4. Call calculate_budget once you have all three costs.
-
-If calculate_budget shows the plan is over budget, try a cheaper hotel or fewer paid
-activities and recalculate — don't just report it's over budget and stop.
-
-Once you have transport, a hotel, activities for each day, and a budget check that
-passes, STOP calling tools and respond with a final plain-text summary of the itinerary:
-transport choice, hotel choice (with its neighborhood), a day-by-day list of
-activities, and total cost vs budget.
 """
 
 TOOL_FUNCTIONS = {
@@ -73,8 +41,24 @@ def call_tool(name: str, tool_input: dict):
         return {"error": f"Tool {name} failed: {str(e)}"}
 
 
-def plan_trip(trip_request_text: str, verbose: bool = True):
+def _to_plain(obj):
+    """Make tool args/results safe to send as JSON (anything odd becomes a string)."""
+    return json.loads(json.dumps(obj, default=str))
+
+
+def run_agent(trip_request_text: str, verbose: bool = True) -> dict:
+    """
+    Runs the full agent loop and returns EVERYTHING, not just the final text:
+      {
+        "itinerary": the final text the agent wrote,
+        "trace":     a list of every tool call it made (name, args, result),
+        "finished":  False if it hit MAX_ITERATIONS without finishing
+      }
+    The web server uses this so the frontend can show both the itinerary
+    and the "Agent Trace View".
+    """
     contents = [types.Content(role="user", parts=[types.Part.from_text(text=trip_request_text)])]
+    trace = []
 
     for iteration in range(MAX_ITERATIONS):
         response = client.models.generate_content(
@@ -86,7 +70,11 @@ def plan_trip(trip_request_text: str, verbose: bool = True):
 
         function_calls = response.function_calls
         if not function_calls:
-            return response.text
+            return {
+                "itinerary": response.text or "(The agent finished but returned no text.)",
+                "trace": trace,
+                "finished": True,
+            }
 
         function_response_parts = []
         for fc in function_calls:
@@ -96,13 +84,28 @@ def plan_trip(trip_request_text: str, verbose: bool = True):
             result = call_tool(fc.name, args)
             if verbose:
                 print(f"    -> {result}")
+            trace.append({
+                "step": len(trace) + 1,
+                "tool": fc.name,
+                "args": _to_plain(args),
+                "result": _to_plain(result),
+            })
             function_response_parts.append(
                 types.Part.from_function_response(name=fc.name, response={"result": result})
             )
 
         contents.append(types.Content(role="user", parts=function_response_parts))
 
-    return "Agent hit the iteration limit without finishing. Check the trace above."
+    return {
+        "itinerary": "The agent hit the iteration limit without finishing. See the Agent Trace for what it did.",
+        "trace": trace,
+        "finished": False,
+    }
+
+
+def plan_trip(trip_request_text: str, verbose: bool = True) -> str:
+    """Same as before: returns just the itinerary text (run_tests.py still uses this)."""
+    return run_agent(trip_request_text, verbose)["itinerary"]
 
 
 if __name__ == "__main__":
